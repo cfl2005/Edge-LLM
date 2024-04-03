@@ -1,1 +1,1 @@
-# DEC-LLM
+# Edge-LLM
