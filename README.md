@@ -10,7 +10,6 @@ Content includes:
 
 Requirements:
 ```
-cd llm
 pip3 install -r requirements.txt
 ```
 
@@ -29,7 +28,6 @@ Run the code:
 2. Replace the `modeling_chatglm.py` in the downloaded model parameter file with `llm/model/modeling_chatglm.py`.
 3. You can call our code using the following steps:
    ```
-   cd llm
    1. LLM Training:
       python edge_server.py --glm_path 'your path of ChatGLM2-6b' --train_path 'your path of Lora_train' --train_tag 1
    2. LLM Inference (using fp16 as an example):
