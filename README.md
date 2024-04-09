@@ -15,7 +15,7 @@ pip3 install -r requirements.txt
 ```
 
 Data Processing:
-Our system's query (corresponding to "sentences" in llm.py) and label (corresponding to "pre_labels" in llm.py) should have the following format:
+Our system's query (corresponding to "sentences" in edge_server.py) and label (corresponding to "pre_labels" in edge_server.py) should have the following format:
 ```
 sentences = [['hello'], ['hi']]
 pre_labels = ['yes', None]
@@ -31,11 +31,11 @@ Run the code:
    ```
    cd llm
    1. LLM Training:
-      python llm.py --glm_path 'your path of ChatGLM2-6b' --train_path 'your path of Lora_train' --train_tag 1
+      python edge_server.py --glm_path 'your path of ChatGLM2-6b' --train_path 'your path of Lora_train' --train_tag 1
    2. LLM Inference (using fp16 as an example):
-      python llm.py --glm_path 'your path of ChatGLM2-6b' --inference_path 'your path of Lora_inference' --inference_tag 1
+      python edge_server.py --glm_path 'your path of ChatGLM2-6b' --inference_path 'your path of Lora_inference' --inference_tag 1
    3. We support loading one Lora for inference and one Lora for training simultaneously (using fp16 as an example):
-      python llm.py --glm_path 'your path of ChatGLM2-6b' --train_path 'your path of Lora_train' --train_tag 1 --inference_path 'your path of Lora_inference' --inference_tag 1
+      python edge_server.py --glm_path 'your path of ChatGLM2-6b' --train_path 'your path of Lora_train' --train_tag 1 --inference_path 'your path of Lora_inference' --inference_tag 1
    ```
 
 Please note that you need to replace "your path of ChatGLM2-6b", "your path of Lora_train", and "your path of Lora_inference" with the actual paths on your system. In this case, you can set "your path of Lora_train" and "your path of Lora_inference" to empty strings, which will initialize a new Lora model.
