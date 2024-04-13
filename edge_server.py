@@ -60,7 +60,6 @@ class Int8():
 
 class GLM_Model():
     def __init__(self, model_name_or_path):
-
         self.model_name_or_path = model_name_or_path
         self.model = None
         self.tokenizer = None
@@ -145,7 +144,7 @@ class Lora_Model_train():
             shift_logits = lm_logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
             padding_size = shift_labels.size()[0] - shift_logits.size()[1]
-            
+
             if padding_size > 0:
                 padding = torch.zeros(shift_logits.size()[0], padding_size, shift_logits.size()[2]).to(
                     shift_logits.device)
@@ -234,38 +233,46 @@ class Lora_Model_Int8_inference():
 
 
 def task_assignment(sentences, pre_labels, glm_path, inference_path, train_path, int_8_path, inference_tag, train_tag,
-                    int_8_tag):
+                    int_8_tag, bs):
     GLM = GLM_Model(glm_path)
     GLM.load()
-
-    if inference_tag != 0:
-        Model_inference = Lora_Model_inference(inference_path)
-        Model_inference.load()
-    if train_tag != 0:
-        Model_train = Lora_Model_train(train_path)
-        Model_train.load()
-    if int_8_tag != 0:
-        Model_int8 = Lora_Model_Int8_inference(int_8_path)
-        Model_int8.load()
-    for sentence, pre_label in zip(sentences, pre_labels):
-        with torch.no_grad():
-            glm_list = GLM.predict(sentence)
-        if isinstance(pre_label, str):
-            if train_tag != 0:
-                pre_label = GLM.tokenizer.encode(pre_label, add_special_tokens=False)
-                Model_train.train(glm_list, pre_label)
-            else:
-                print("please choose a train model")
-        else:
-            if int_8_tag * inference_tag == 0:
-                if inference_tag != 0 and int_8_tag == 0:
-                    token=Model_inference.predict(glm_list)
-                elif int_8_tag != 0 and inference_tag == 0:
-                    token=Model_int8.predict(glm_list)
+    if bs == 1:
+        if inference_tag != 0:
+            Model_inference = Lora_Model_inference(inference_path)
+            Model_inference.load()
+        if train_tag != 0:
+            Model_train = Lora_Model_train(train_path)
+            Model_train.load()
+        if int_8_tag != 0:
+            Model_int8 = Lora_Model_Int8_inference(int_8_path)
+            Model_int8.load()
+        for sentence, pre_label in zip(sentences, pre_labels):
+            with torch.no_grad():
+                glm_list = GLM.predict(sentence)
+            if isinstance(pre_label, str):
+                if train_tag != 0:
+                    pre_label = GLM.tokenizer.encode(pre_label, add_special_tokens=False)
+                    Model_train.train(glm_list, pre_label)
                 else:
-                    print("please choose a inference model")
+                    print("please choose a train model")
             else:
-                print("can't use two models to inference")
+                if int_8_tag * inference_tag == 0:
+                    if inference_tag != 0 and int_8_tag == 0:
+                        token = Model_inference.predict(glm_list)
+                        output = GLM.tokenizer.decode(token)
+                    elif int_8_tag != 0 and inference_tag == 0:
+                        token = Model_int8.predict(glm_list)
+                        output = GLM.tokenizer.decode(token)
+                    else:
+                        print("please choose a inference model")
+                else:
+                    print("can't use two models to inference")
+    elif bs > 1:
+        for sentence, pre_label in zip(sentences, pre_labels):
+            with torch.no_grad():
+                glm_list = GLM.predict(sentence)
+    else:
+        print("please choose a true batchsize of ChatGLM")
 
 
 def main():
@@ -282,15 +289,11 @@ def main():
                         help='Whether to use train mode 0 means not using it 1 means using it')
     parser.add_argument('--int_8_tag', type=int, default=0,
                         help='Whether to use inference mode of int8 0 means not using it 1 means using it')
+    parser.add_argument('--bs', type=int, default=1,
+                        help='Batch size of ChatGLM')
     args = parser.parse_args()
     task_assignment(sentences, pre_labels, args.glm_path, args.inference_path, args.train_path, args.int_8_path,
-                    args.inference_tag, args.train_tag, args.int_8_tag)
-
-
-if __name__ == "__main__":
-    main()
-, pre_labels, args.glm_path, args.inference_path, args.train_path, args.int_8_path,
-                    args.inference_tag, args.train_tag, args.int_8_tag)
+                    args.inference_tag, args.train_tag, args.int_8_tag, args.bs)
 
 
 if __name__ == "__main__":
