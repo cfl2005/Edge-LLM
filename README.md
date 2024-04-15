@@ -91,6 +91,14 @@ Sorts the tasks using the Earliest Deadline First (EDF) scheduling algorithm.
 - `current_time`: Current time
 - `batch_size`: Number of tasks to be predicted at once
 
+### `task_vdf(tasks_processed, current_time, batch_size)`
+
+Sorts the tasks VDF scheduling algorithm.
+
+- `tasks_processed`: List of tasks after initial processing
+- `current_time`: Current time
+- `batch_size`: Number of tasks to be predicted at once
+
 ### `glm_predict(model, tasks_processed, schedule, batch_size)`
 
 Uses the model to predict the tasks.
