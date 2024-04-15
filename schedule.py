@@ -2,7 +2,7 @@ import random
 import time
 import argparse
 from edge_server import *
-
+from xlxs import *
 
 def task_process(tasks, interval_time, batch_size):
     for i, task in enumerate(tasks):
@@ -51,6 +51,15 @@ def task_edf(tasks_processed, current_time, batch_size):
         tasks_processed.remove(task)
     return current_over_tasks, tasks_processed
 
+def task_vdf(tasks_processed, current_time, batch_size):
+    tasks_to_do = task_do(tasks_processed, current_time)
+
+    sorted_tasks = sorted(tasks_to_do, key=lambda x: x['TP_avg']/(x['true_time']-current_time))
+    current_over_tasks = sorted_tasks[:batch_size]
+    for task in current_over_tasks:
+        tasks_processed.remove(task)
+    return current_over_tasks, tasks_processed
+
 
 def glm_predict(model, tasks_processed, schedule, batch_size):
     current_time = 0
@@ -61,18 +70,16 @@ def glm_predict(model, tasks_processed, schedule, batch_size):
             current_over_tasks, tasks_processed = task_sjf(tasks_processed, current_time, batch_size)
         elif schedule == 'edf':
             current_over_tasks, tasks_processed = task_edf(tasks_processed, current_time, batch_size)
+        elif schedule=='vdf':
+            current_over_tasks, tasks_processed = task_vdf(tasks_processed, current_time, batch_size)    
         else:
             raise ValueError("Invalid schedule type")
         sentence = []
-        sentence_mid = []
         for task in current_over_tasks:
-            sentence_mid.append(task['sentence'])
-        sentence.append(sentence_mid)
-
+            sentence.append(task['sentence'])
         start_time = time.time()
-        model.predict(sentence)
+        glm_list=model.predict(sentence)
         end_time = time.time()
-
         for task in current_over_tasks:
             task_processing_time = end_time - start_time
             task_end_time = current_time + task_processing_time
@@ -86,7 +93,7 @@ def glm_predict(model, tasks_processed, schedule, batch_size):
 
 
 def main():
-    tasks = generate_random_tasks(100)
+    tasks = read_xlsx_to_list()
     parser = argparse.ArgumentParser(description='Schedule program')
     parser.add_argument('--glm_path', type=str, default="../model/chatglm2-6b", help='The path of ChatGLM')
     parser.add_argument('--task_batch', type=int, default=16, help='Number of tasks to be sent within a time interval')
@@ -97,8 +104,7 @@ def main():
     tasks_processed = task_process(tasks, args.interval_time, args.task_batch)
     processed_tasks = glm_predict(GLM_Model(args.glm_path), tasks_processed, args.schedule_mode,
                                   args.batch_size_predict)
-    print(processed_tasks)
-
+    print(processed_tasks)    
 
 if __name__ == "__main__":
     main()
